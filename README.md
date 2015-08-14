@@ -17,20 +17,17 @@ Anaconda Scientific Library (http://continuum.io/downloads#py34) as well
 as several other python plugins:
 
 Included in Anaconda:
---------------------
-	*	PyQt 		v4	(will not install with 'pip')
-	*	numpy 	v1.9.2
-	*	scipy 	v0.16
-	*	scikit-learn	v0.16.1
-	*	xlrd		v0.9.3
+*	PyQt 		v4	(will not install with 'pip')
+*	numpy 	v1.9.2
+*	scipy 	v0.16
+*	scikit-learn	v0.16.1
+*	xlrd		v0.9.3
 
 Separate installs:
-	*	pyqtgraph	v0.9.10
-	*	biodocks	v0.7
+*	pyqtgraph	v0.9.10
+*	biodocks	v0.7
 
-To install plugins..
-	*	Open a command prompt and type 'pip install plugin-name',
-	  using the names as they appear above.
+To install plugins, open a command prompt and type 'pip install plugin-name', using the names as they appear above.
 
 INSTALLATION
 ------------
