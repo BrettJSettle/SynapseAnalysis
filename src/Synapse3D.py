@@ -4,13 +4,15 @@
 @Lab: Parker Lab
 @Date: August 6, 2015
 """
-import os,sys,inspect
+import os,sys
 from BioDocks import *
 from pyqtgraph.dockarea import *
 from scipy.spatial import ConvexHull
 from collections import OrderedDict
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from Channels import *
+from ClusterMath import *
 
 app = QApplication([])
 
@@ -40,95 +42,12 @@ color_dict = {'atto488': colors[0], 'Alexa647': colors[1]}
 ignore = {"Z Rejected"}
 
 Channels = []
-
-class ActivePoint():
-	def __init__(self, data):
-		self.pos = np.array([data['Xc'], data['Yc'], data['Zc']])
-		self.data = data
-
-	def __getitem__(self, item):
-		if type(item) == int:
-			return self.pos[item]
-		if item in self.data:
-			return self.data[item]
-		else:
-			return self.__dict__[item]
-
-class Synapse(gl.GLScatterPlotItem):
-	def __init__(self, channelA, channelB):
-		super(Synapse, self).__init__()
-		self.centers = gl.GLLinePlotItem()
-		self.centers.setParentItem(self)
-		self.centers.setVisible(False)
-		self.mesh = gl.GLMeshItem()
-		self.mesh.setParentItem(self)
-		self.mesh.setVisible(False)
-		self.ax = gl.GLAxisItem(glOptions='opaque')
-		self.ax.setParentItem(self)
-		self.setChannels(channelA, channelB)
-		self._make_menu()
-
-	def setChannels(self, channelA, channelB):
-		self.channels = {ch.__name__: ch for ch in [channelA, channelB]}
-		colors = [QColor.getRgbF(channelA.color()) for i in range(channelA.getCount())]
-		colors.extend([QColor.getRgbF(channelB.color()) for i in range(channelB.getCount())])
-		colors = np.array(colors)
-		pos = list(channelA.getPoints(z=True))
-		pos.extend(channelB.getPoints(z=True))
-		self.ax.resetTransform()
-		cen = np.average(pos, axis=0)
-		self.ax.translate(*cen)
-		self.setData(pos=np.array(pos), color=colors, pxMode=True, size=4)
-		if not (channelA.getCount() == 0 or channelA.getCount() == 0):
-			self.centers.setData(pos=np.array([channelA.getCenter(z=True), channelB.getCenter(z=True)]), color=(1, 1, 1, 1))
-
-	def _make_menu(self):
-		self.menu = QMenu('Synapse 3D Plot Options')
-		self.menu.addAction(QAction('Show Center Distance', self.menu, triggered=self.centers.setVisible, checkable=True))
-		self.menu.addAction(QAction('Export Coordinates', self.menu, triggered=lambda : export_arr(np.transpose(self.pos), header='X\tY\tZ', comments='')))
-
-class Channel(pg.ScatterPlotItem):
-	def __init__(self, name, points, color):
-		super(Channel, self).__init__(x=[p[0] for p in points], y=[p[1] for p in points], brush=color, pen=color, size=2)
-		self.__name__ = name
-		self.pts = points
-
-	def getPoints(self, z=False):
-		if self.getCount() == 0:
-			return np.array([])
-		if z:
-			return np.array([p.pos for p in self.pts])
-		else:
-			return np.transpose(self.getData())
-
-	def getCount(self):
-		return len(self.pts)
-
-	def getCenter(self, z=False):
-		return np.average(self.getPoints(z), 0)
-
-	def color(self):
-		return self.opts['brush'].color()
-
 empty_channel = Channel('Empty', [], (1, 1, 1))
 
 def displayData():
 	dataWidget.setData(sorted([roi.synapse_data for roi in plotWidget.items() if \
 		isinstance(roi, Freehand) and hasattr(roi, 'synapse_data')], key=lambda f: f['ROI #']))
 	dataWidget.changeFormat('%.3f')
-
-def nearest_distances(arr):
-	ids = range(len(arr))
-	dists = {}
-	while len(ids) > 1:
-		temp = {}
-		for i in ids[1:]:
-			temp[(ids[0], i)] = np.linalg.norm(np.subtract(arr[ids[0]],arr[i]))
-		min_pair = sorted(temp, key=lambda f: temp[f])[0]
-		dists[min_pair] = temp[min_pair]
-		ids.remove(min_pair[0])
-		ids.remove(min_pair[1])
-	return dists
 
 def subchannels_in_roi(roi):
 	channels = []
@@ -163,18 +82,7 @@ def analyze_roi(roi):
 	else:
 		del roi.synapse_data
 		print('Must select exactly 2 channels to calculate distance. Ignoring ROI %d' % roi.id)
-	plotROIChannels(roi)
 	displayData()
-
-def tetrahedron_volume(a, b, c, d):
-    return np.abs(np.einsum('ij,ij->i', a-d, np.cross(b-d, c-d))) / 6
-
-def convex_volume(points):
-    ch = ConvexHull(points)
-    simplices = np.column_stack((np.repeat(ch.vertices[0], ch.nsimplex), ch.simplices))
-    tets = ch.points[simplices]
-    return np.sum(tetrahedron_volume(tets[:, 0], tets[:, 1],
-                                     tets[:, 2], tets[:, 3]))
 
 def plotROIChannels(roi):
 	if not synapseDock.isVisible():

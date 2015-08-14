@@ -5,4 +5,3 @@ IF "%1"=="-install" (
 )
 python Synapse.py
 del /S *.pyc
-del /S __pycache__

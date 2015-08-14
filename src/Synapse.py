@@ -11,6 +11,8 @@ from scipy.spatial import Delaunay
 from pyqtgraph.dockarea import *
 from collections import OrderedDict
 import pyqtgraph.console
+from Channels import ActivePoint, Channel
+from ClusterMath import *
 
 app = QtGui.QApplication([])
 
@@ -39,50 +41,6 @@ legend = plotWidget.addLegend()
 
 Channels = []
 
-class ActivePoint(QtCore.QPointF):
-	def __init__(self, data):
-		super(ActivePoint, self).__init__(data['Xc'], data['Yc'])
-		self.data = data
-
-	def __getitem__(self, item):
-		if item in self.data:
-			return self.data[item]
-		else:
-			return self.__dict__[item]
-
-
-class Channel(pg.ScatterPlotItem):
-	def __init__(self, name, points, **args):
-		self.__name__ = name
-		self.point_list = points
-		base = {'brush': (255, 255, 255), 'size': 3, 'symbol': 'o', 'pen': None}
-		base.update(args)
-		super(Channel, self).__init__(x=np.array([p.x() for p in self.point_list]), y=np.array([p.y() for p in self.point_list]), **base)
-		self.make_menu()
-		self.colorDialog=QtGui.QColorDialog()
-		self.colorDialog.currentColorChanged.connect(self.setBrush)
-
-	def getCount(self):
-		return len(self.point_list)
-
-	def getPoints(self):
-		return np.transpose([[p.x() for p in self.point_list], [p.y() for p in self.point_list]])
-
-	def getCenter(self):
-		if self.getCount() == 0:
-			raise Exception('Cannot get center, no points in %s channel' % self.__name__)
-		return np.average(self.getPoints(), 0)
-
-	def make_menu(self):
-		self.menu = QtGui.QMenu(self.__name__)
-		self.menu.addAction(QtGui.QAction('Hide Item', self, triggered=lambda f: self.setVisible(not f), checkable=True))
-		self.menu.addAction(QtGui.QAction("Change C&olor", self.menu, triggered =lambda :  self.colorDialog.open()))
-		self.menu.addAction(QtGui.QAction('&Remove', self, triggered=lambda : self.getViewBox().removeItem(self)))
-
-	def remove(self):
-		plotWidget.removeItem(self)
-		Channels.remove(self)
-
 def clear():
 	global Channels
 	for ch in Channels:
@@ -105,7 +63,7 @@ def import_channels(filename=''):
 	pts = [ActivePoint({k: data[k][i] for k in data}) for i in range(len(data['Channel Name']))]
 
 	for i, ch in enumerate(channel_names):
-		item = Channel(name=ch, points=[p for p in pts if p['Channel Name'] == ch], brush=channel_colors[i])
+		item = Channel(name=ch, points=[p for p in pts if p['Channel Name'] == ch], color=channel_colors[i])
 		plotWidget.add(item, name=ch)
 		Channels.append(item)
 		legend.addItem(item, ch)
@@ -113,22 +71,25 @@ def import_channels(filename=''):
 def displayData():
 	synapseWidget.setData(sorted([roi.synapse_data for roi in plotWidget.items() if isinstance(roi, Freehand) and hasattr(roi, 'synapse_data')], key=lambda f: f['ROI #']))
 
-def analyze_roi(roi):
+def subchannels_in_roi(roi):
 	channels = []
 	for ch in Channels:
 		pts_in = []
-		for syn_pt in ch.point_list:
-			if roi.contains(syn_pt):
+		for syn_pt in ch.pts:
+			if roi.contains(QPointF(syn_pt[0], syn_pt[1])):
 				pts_in.append(syn_pt)
-		channels.append(Channel(ch.__name__, pts_in))
+		channels.append(Channel(ch.__name__, pts_in, ch.color()))
+	return channels
 
+def analyze_roi(roi):
+	channels = subchannels_in_roi(roi)
 	roi.synapse_data = OrderedDict([('ROI #', roi.id), ('Mean Distance (%s)' % unit_prefixes[unit], 0), ('%s N' % Channels[0].__name__, 0), \
 	('%s N' % Channels[1].__name__, 0), ('%s Area (%s^2)' % (Channels[0].__name__, unit_prefixes[unit]), 0), ('%s Area (%s^2)' % (Channels[1].__name__, unit_prefixes[unit]), 0)])
 
 	for i, ch in enumerate(channels):
 		roi.synapse_data['%s N' % ch.__name__] = ch.getCount()
 		if ch.getCount() >= 3:
-			roi.synapse_data['%s Area (%s^2)' % (ch.__name__, unit_prefixes[unit])] = concaveArea(ch.getPoints(), channel_colors[i])
+			roi.synapse_data['%s Area (%s^2)' % (ch.__name__, unit_prefixes[unit])] = concaveArea(ch.getPoints())
 		else:
 			print('Cannot get area of %s in roi %d with %d points' % (ch.__name__, roi.id, ch.getCount()))
 
@@ -146,52 +107,6 @@ def analyze_roi(roi):
 
 	displayData()
 
-def distance(ptA, ptB):
-	return np.linalg.norm(np.subtract(ptA, ptB))
-
-def order_walls(walls):
-	new_wall = walls.pop(0)
-	while walls:
-		add = [wall for wall in walls if new_wall[-1] in wall][0]
-		walls.remove(add)
-		add.remove(new_wall[-1])
-		new_wall.extend(add)
-	return new_wall
-
-def getTriangleArea(A, B, C):
-	return .5 * abs(A[0]*(B[1] - C[1]) + B[0]*(C[1] - A[1]) + C[0]*(A[1] - B[1]))
-
-def concaveArea(points, color):
-	tri = Delaunay(points)
-	outerwalls = tri.convex_hull.tolist()
-	outerwalls = order_walls(outerwalls)
-	verts = tri.vertices.tolist()
-	change = False
-	i = 0
-	while i < len(outerwalls) - 1:
-		at = outerwalls[i]
-		next = outerwalls[i + 1]
-		outer_dist = distance(points[at], points[next])
-		inner = None
-		for t in verts:
-			inners = set(t) ^ {at, next}
-			if len(inners) == 1 and len(set(outerwalls) & set(t)) == 2:
-				inner = inners.pop()
-				break
-		if inner != None and outer_dist > distance(points[at], points[inner]):
-			outerwalls.insert(i+1, inner)
-			change = True
-			verts.remove(t)
-			i += 1
-		i += 1
-		if i >= len(outerwalls) - 1 and change:
-			change = False
-			i = 0
-	pts = np.array([points[i] for i in outerwalls])
-	#for vs in verts:
-	#	plotWidget.addItem(pg.PlotDataItem(np.array([points[i] for i in (vs + [vs[0]])]), pen=color))
-	return sum(map(lambda vs: getTriangleArea(*[points[i] for i in vs]), verts))
-
 def show_line(roi, hover):
 	if hasattr(roi, 'mean_line'):
 		roi.mean_line.setVisible(hover)
@@ -200,6 +115,7 @@ def connect_roi(roi):
 	roi.sigChanged.connect(analyze_roi)
 	roi.sigRemoved.connect(lambda : displayData())
 	roi.sigHoverChanged.connect(show_line)
+	roi.sigClicked.connect(analyze_roi)
 	analyze_roi(roi)
 
 menu = win.menuBar()
