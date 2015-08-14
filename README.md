@@ -17,6 +17,7 @@ Anaconda Scientific Library (http://continuum.io/downloads#py34) as well
 as several other python plugins:
 
 Included in Anaconda:
+--------------------
 	*	PyQt 		v4	(will not install with 'pip')
 	*	numpy 	v1.9.2
 	*	scipy 	v0.16
