@@ -1,15 +1,6 @@
 # SynapseAnalysis
 Synapse Activity Program based on BioDocks Library
 
-*****************************************
-*										*
-*	Program: Synapse Analysis			*
-*	Author: Brett Settle				*
-*	Date: August 13, 2016				*
-*	Lab: UCI Parker Lab, McGaugh Hall	*
-*										*
-*****************************************
-
 INTRODUCTION
 ------------
 The Synapse Analysis program takes as input the coordinates of synapse activity through
@@ -26,18 +17,18 @@ Anaconda Scientific Library (http://continuum.io/downloads#py34) as well
 as several other python plugins:
 
 Included in Anaconda:
-	- PyQt 		v4	(will not install with 'pip')
-	- numpy 	v1.9.2
-	- scipy 	v0.16
-	- scikit-learn	v0.16.1
-	- xlrd		v0.9.3
+	* PyQt 		v4	(will not install with 'pip')
+	* numpy 	v1.9.2
+	* scipy 	v0.16
+	* scikit-learn	v0.16.1
+	* xlrd		v0.9.3
 
 Separate installs:
-	- pyqtgraph	v0.9.10
-	- biodocks	v0.7
+	* pyqtgraph	v0.9.10
+	* biodocks	v0.7
 
 To install plugins..
-	- Open a command prompt and type 'pip install plugin-name',
+	* Open a command prompt and type 'pip install plugin-name',
 	  using the names as they appear above.
 
 INSTALLATION
@@ -51,5 +42,10 @@ button on the right sidebar. Extract it to your computer and run by clicking the
 
 USING THE PROGRAM
 -----------------
-
 IN PROGRESS
+
+ABOUT:
+*Program: Synapse Analysis
+*Author: Brett Settle
+*Date: August 13, 2016
+*Lab: UCI Parker Lab, McGaugh Hall
