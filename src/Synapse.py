@@ -21,7 +21,7 @@ win.resize(1700, 900)
 dockArea = DockArea()
 win.setCentralWidget(dockArea)
 win.setWindowTitle('Main Window')
-plotWidget = PlotWidget(viewBox=ROIViewBox(creatingROI=True, roiSnap=False))
+plotWidget = pg.PlotWidget(viewBox=ROIViewBox(creatingROI=True, roiSnap=False))
 
 units = {'Pixels': 166, 'Nanometers': 1}
 unit_prefixes = {'Pixels': 'px', 'Nanometers': 'nm'}

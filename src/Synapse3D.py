@@ -16,10 +16,8 @@ from ClusterMath import *
 
 app = QApplication([])
 
-win = QMainWindow()
+win = DockWindow(addMenu=False)
 win.resize(1700, 900)
-dockArea = DockView(win, menu=False)
-win.setCentralWidget(dockArea)
 win.setWindowTitle('Main Window')
 plotWidget = PlotWidget(viewBox=ROIViewBox(creatingROI=True, roiSnap=False))
 
@@ -195,7 +193,7 @@ layout.addWidget(show_ch1, 0, 1)
 layout.addWidget(show_ch2, 0, 2)
 layout.addItem(QSpacerItem(400, 20), 0, 3, 1, 8)
 
-plotDock = dockArea.addWidget(plotWidget, name='2D Plotted Channels', size=(400, 500))
+plotDock = win.addWidget(plotWidget, name='2D Plotted Channels', size=(400, 500))
 plotDock.addWidget(opsFrame)
 
 synapseFrame = QWidget()
@@ -224,12 +222,12 @@ ROI Plot 3D Widget Controls
 	Right Click for plotted item options
 '''), 7, 0, 2, 3)
 
-synapseDock = dockArea.addWidget(name='Plot Controls', size=(300, 100), widget=synapseFrame)
+synapseDock = win.addWidget(name='Plot Controls', size=(300, 100), widget=synapseFrame)
 synapseDock.hide()
 plotDock.window().setGeometry(340, 100, 1400, 800)
 
 dataWidget = DataWidget()
-dockArea.addWidget(dataWidget, where=('right', plotDock), size=(100, 500))
+win.addWidget(dataWidget, where=('right', plotDock), size=(100, 500))
 win.closeEvent = lambda f: app.exit()
 
 win.show()
