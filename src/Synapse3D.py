@@ -107,7 +107,7 @@ def open_file(filename=''):
 	if filename == '':
 		filename = getFilename(filter='Text Files (*.txt)')
 	clear()
-	data = import_file(filename)
+	data = importFile(filename)
 	data = {d[0]: d[1:] for d in np.transpose(data)}
 	for k in data:
 		if k != 'Channel Name':
@@ -130,7 +130,7 @@ def open_file(filename=''):
 		else:
 			color = colors[i]
 		Channels.append(Channel(n, [p for p in pts if p['Channel Name'] == n], color))
-		plotWidget.add(Channels[-1])
+		plotWidget.addItem(Channels[-1])
 		legend.addItem(Channels[-1], n)
 	show_ch1.setText(Channels[0].__name__)
 	show_ch2.setText(Channels[1].__name__)
@@ -193,7 +193,8 @@ layout.addWidget(show_ch1, 0, 1)
 layout.addWidget(show_ch2, 0, 2)
 layout.addItem(QSpacerItem(400, 20), 0, 3, 1, 8)
 
-plotDock = win.addWidget(plotWidget, name='2D Plotted Channels', size=(400, 500))
+plotWidget.__name__ = '2D Plotted Channels'
+plotDock = win.addWidget(plotWidget, size=(400, 500))
 plotDock.addWidget(opsFrame)
 
 synapseFrame = QWidget()
@@ -222,7 +223,7 @@ ROI Plot 3D Widget Controls
 	Right Click for plotted item options
 '''), 7, 0, 2, 3)
 
-synapseDock = win.addWidget(name='Plot Controls', size=(300, 100), widget=synapseFrame)
+synapseDock = win.addWidget(size=(300, 100), widget=synapseFrame)
 synapseDock.hide()
 plotDock.window().setGeometry(340, 100, 1400, 800)
 

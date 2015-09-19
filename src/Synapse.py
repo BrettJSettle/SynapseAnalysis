@@ -54,7 +54,7 @@ def import_channels(filename=''):
 		filename = getFilename('Select the text file of the channels to import')
 	if filename == '':
 		return
-	data = file_to_arr(filename)
+	data = fileToArray(filename)
 	data['Channel Name'] = data['Channel Name'].astype(str)
 	data['Xc'] /= units[unit]
 	data['Yc'] /= units[unit]
