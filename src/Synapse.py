@@ -64,7 +64,7 @@ def import_channels(filename=''):
 
 	for i, ch in enumerate(channel_names):
 		item = Channel(name=ch, points=[p for p in pts if p['Channel Name'] == ch], color=channel_colors[i])
-		plotWidget.add(item, name=ch)
+		plotWidget.addItem(item, name=ch)
 		Channels.append(item)
 		legend.addItem(item, ch)
 
