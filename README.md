@@ -1,3 +1,5 @@
+# THIS PROJECT IS DEPRECATED AND SHOULD NO LONGER BE USED
+
 # SynapseAnalysis
 Synapse Activity Program based on BioDocks Library
 
